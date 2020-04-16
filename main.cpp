@@ -4,6 +4,15 @@
 #include <stdio.h>
 #include <string>
 
+enum KeyPressSurface {
+  KEY_PRESS_SURFACE_DEFAULT,
+  KEY_PRESS_SURFACE_DOWN,
+  KEY_PRESS_SURFACE_UP,
+  KEY_PRESS_SURFACE_LEFT,
+  KEY_PRESS_SURFACE_RIGHT,
+  KEY_PRESS_SURFACE_TOTAL
+};
+
 const int SCREEN_WIDTH = 1024;
 const int SCREEN_HEIGHT = 760;
 
@@ -19,15 +28,37 @@ SDL_Window *gWindow = NULL;
 
 SDL_Surface *gScreenSurface = NULL;
 
-SDL_Surface *gTestImage = NULL;
+SDL_Surface *gKeyPressSurfaces[KEY_PRESS_SURFACE_TOTAL];
+
+SDL_Surface *gCurrentSurface = NULL;
 
 int main(int argc, char *args[]) {
   if (init()) {
-    SDL_FillRect(gScreenSurface, NULL,
-                 SDL_MapRGB(gScreenSurface->format, 0xFF, 0xFF, 0xFF));
-    gTestImage = loadSurface("image.jpg");
+    gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT] =
+        SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32, 0, 0, 0, 0);
+    SDL_FillRect(gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT], NULL,
+                 SDL_MapRGB(gScreenSurface->format, 0x00, 0x00, 0x00));
+    gKeyPressSurfaces[KEY_PRESS_SURFACE_DOWN] =
+        SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32, 0, 0, 0, 0);
+    SDL_FillRect(gKeyPressSurfaces[KEY_PRESS_SURFACE_DOWN], NULL,
+                 SDL_MapRGB(gScreenSurface->format, 0xFF, 0x00, 0x00));
+    gKeyPressSurfaces[KEY_PRESS_SURFACE_UP] =
+        SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32, 0, 0, 0, 0);
+    SDL_FillRect(gKeyPressSurfaces[KEY_PRESS_SURFACE_UP], NULL,
+                 SDL_MapRGB(gScreenSurface->format, 0x00, 0xFF, 0x00));
+    gKeyPressSurfaces[KEY_PRESS_SURFACE_RIGHT] =
+        SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32, 0, 0, 0, 0);
+    SDL_FillRect(gKeyPressSurfaces[KEY_PRESS_SURFACE_RIGHT], NULL,
+                 SDL_MapRGB(gScreenSurface->format, 0x00, 0x00, 0xFF));
+    gKeyPressSurfaces[KEY_PRESS_SURFACE_LEFT] =
+        SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32, 0, 0, 0, 0);
+    SDL_FillRect(gKeyPressSurfaces[KEY_PRESS_SURFACE_LEFT], NULL,
+                 SDL_MapRGB(gScreenSurface->format, 0xFF, 0x00, 0xFF));
+    // gTestImage = loadSurface("image.jpg");
 
-    SDL_BlitSurface(gTestImage, NULL, gScreenSurface, NULL);
+    gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
+    SDL_BlitSurface(gCurrentSurface, NULL, gScreenSurface, NULL);
+    // SDL_BlitSurface(gCurrentSurface, NULL, gScreenSurface, NULL);
 
     SDL_UpdateWindowSurface(gWindow);
 
@@ -38,7 +69,32 @@ int main(int argc, char *args[]) {
       while (SDL_PollEvent(&e) != 0) {
         if (e.type == SDL_QUIT) {
           quit = true;
+        } else if (e.type == SDL_KEYDOWN) {
+          switch (e.key.keysym.sym) {
+          case SDLK_UP:
+            gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_UP];
+            break;
+          case SDLK_LEFT:
+            gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_LEFT];
+            break;
+          case SDLK_RIGHT:
+            gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_RIGHT];
+            break;
+          case SDLK_DOWN:
+            gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DOWN];
+            break;
+          default:
+            gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
+            break;
+          }
+        } else if (e.type == SDL_KEYUP) {
+          gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
         }
+
+        std::cout << gCurrentSurface << std::endl;
+        SDL_BlitSurface(gCurrentSurface, NULL, gScreenSurface, NULL);
+
+        SDL_UpdateWindowSurface(gWindow);
       }
     }
   }
@@ -84,8 +140,8 @@ bool init() {
 }
 
 void close() {
-  SDL_FreeSurface(gTestImage);
-  gTestImage = NULL;
+  SDL_FreeSurface(gCurrentSurface);
+  gCurrentSurface = NULL;
   SDL_DestroyWindow(gWindow);
   gWindow = NULL;
   SDL_Quit();
