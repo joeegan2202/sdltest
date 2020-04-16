@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <string>
 
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
+const int SCREEN_WIDTH = 1024;
+const int SCREEN_HEIGHT = 760;
 
 bool init();
 
@@ -22,7 +22,27 @@ SDL_Surface *gScreenSurface = NULL;
 SDL_Surface *gTestImage = NULL;
 
 int main(int argc, char *args[]) {
-  init();
+  if (init()) {
+    SDL_FillRect(gScreenSurface, NULL,
+                 SDL_MapRGB(gScreenSurface->format, 0xFF, 0xFF, 0xFF));
+    gTestImage = loadSurface("image.jpg");
+
+    SDL_BlitSurface(gTestImage, NULL, gScreenSurface, NULL);
+
+    SDL_UpdateWindowSurface(gWindow);
+
+    bool quit = false;
+
+    SDL_Event e;
+    while (!quit) {
+      while (SDL_PollEvent(&e) != 0) {
+        if (e.type == SDL_QUIT) {
+          quit = true;
+        }
+      }
+    }
+  }
+
   close();
 
   return 0;
@@ -56,16 +76,6 @@ bool init() {
       } else {
         // Get window surface
         gScreenSurface = SDL_GetWindowSurface(gWindow);
-
-        // Fill the surface white
-        SDL_FillRect(gScreenSurface, NULL,
-                     SDL_MapRGB(gScreenSurface->format, 0xFF, 0x00, 0x00));
-
-        // Update the surface
-        SDL_UpdateWindowSurface(gWindow);
-
-        // Wait two seconds
-        SDL_Delay(2000);
       }
     }
   }
@@ -74,7 +84,10 @@ bool init() {
 }
 
 void close() {
+  SDL_FreeSurface(gTestImage);
+  gTestImage = NULL;
   SDL_DestroyWindow(gWindow);
+  gWindow = NULL;
   SDL_Quit();
 }
 

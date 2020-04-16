@@ -31,6 +31,24 @@
 				"clear": false
 			},
 			"problemMatcher": []
+		},
+		{
+			"label": "lint",
+			"type": "shell",
+			"command": "/usr/bin/clang-format",
+			"args": [
+				"-i",
+				"${file}"
+			],
+			"presentation": {
+				"echo": false,
+				"reveal": "never",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			},
+			"problemMatcher": []
 		}
 	]
 }
