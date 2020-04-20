@@ -18,9 +18,9 @@ const int SCREEN_HEIGHT = 760;
 
 bool init();
 
-bool loadMedia();
-
 void close();
+
+SDL_Texture* loadTexture(std::string path);
 
 SDL_Surface *loadSurface(std::string path);
 
@@ -32,7 +32,17 @@ SDL_Surface *gKeyPressSurfaces[KEY_PRESS_SURFACE_TOTAL];
 
 SDL_Surface *gCurrentSurface = NULL;
 
+SDL_Renderer* gRenderer = NULL;
+
+SDL_Texture* gTexture = NULL;
+
 int main(int argc, char *args[]) {
+  SDL_Rect scale;
+  scale.x = SCREEN_WIDTH/3;
+  scale.y = SCREEN_HEIGHT/3;
+  scale.w = SCREEN_WIDTH/3;
+  scale.h = SCREEN_HEIGHT/3;
+
   if (init()) {
     gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT] =
         SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32, 0, 0, 0, 0);
@@ -54,13 +64,13 @@ int main(int argc, char *args[]) {
         SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32, 0, 0, 0, 0);
     SDL_FillRect(gKeyPressSurfaces[KEY_PRESS_SURFACE_LEFT], NULL,
                  SDL_MapRGB(gScreenSurface->format, 0xFF, 0x00, 0xFF));
-    // gTestImage = loadSurface("image.jpg");
+    gTexture = loadTexture("image.jpg");
 
     gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
-    SDL_BlitSurface(gCurrentSurface, NULL, gScreenSurface, NULL);
+    //SDL_BlitSurface(gCurrentSurface, NULL, gScreenSurface, NULL);
     // SDL_BlitSurface(gCurrentSurface, NULL, gScreenSurface, NULL);
 
-    SDL_UpdateWindowSurface(gWindow);
+    //SDL_UpdateWindowSurface(gWindow);
 
     bool quit = false;
 
@@ -69,33 +79,23 @@ int main(int argc, char *args[]) {
       while (SDL_PollEvent(&e) != 0) {
         if (e.type == SDL_QUIT) {
           quit = true;
-        } else if (e.type == SDL_KEYDOWN) {
-          switch (e.key.keysym.sym) {
-          case SDLK_UP:
-            gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_UP];
-            break;
-          case SDLK_LEFT:
-            gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_LEFT];
-            break;
-          case SDLK_RIGHT:
-            gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_RIGHT];
-            break;
-          case SDLK_DOWN:
-            gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DOWN];
-            break;
-          default:
-            gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
-            break;
-          }
-        } else if (e.type == SDL_KEYUP) {
-          gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
         }
 
-        std::cout << gCurrentSurface << std::endl;
-        SDL_BlitSurface(gCurrentSurface, NULL, gScreenSurface, NULL);
-
-        SDL_UpdateWindowSurface(gWindow);
       }
+
+      SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+
+      SDL_RenderClear(gRenderer);
+
+      SDL_SetRenderDrawColor(gRenderer, 0x00, 0x00, 0xFF, 0xFF);
+
+      SDL_Rect draw = {0, 0, SCREEN_WIDTH/2, SCREEN_HEIGHT/2};
+
+      SDL_RenderCopy(gRenderer, gTexture, NULL, &scale);
+      SDL_RenderFillRect(gRenderer, &draw);
+
+
+      SDL_RenderPresent(gRenderer);
     }
   }
 
@@ -123,6 +123,8 @@ bool init() {
       printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
       success = false;
     } else {
+      gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
+
       // Initialize PNG loading
       int imgFlags = IMG_INIT_PNG;
       if (!(IMG_Init(imgFlags) & imgFlags)) {
@@ -144,6 +146,7 @@ void close() {
   gCurrentSurface = NULL;
   SDL_DestroyWindow(gWindow);
   gWindow = NULL;
+  IMG_Quit();
   SDL_Quit();
 }
 
@@ -170,4 +173,16 @@ SDL_Surface *loadSurface(std::string path) {
   }
 
   return optimizedSurface;
+}
+
+SDL_Texture* loadTexture(std::string path) {
+  SDL_Texture* texture = NULL;
+
+  SDL_Surface* loadedSurface = IMG_Load(path.c_str());
+
+  texture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
+
+  SDL_FreeSurface(loadedSurface);
+
+  return texture;
 }
