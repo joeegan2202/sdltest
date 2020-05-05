@@ -1,4 +1,4 @@
-OBJS = main.cpp
+OBJS = main.cpp sysload.cpp sysload.h
 
 CC = g++
 
